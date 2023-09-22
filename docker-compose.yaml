@@ -1,3 +1,4 @@
+name: "sj430842"
 services:
   service1:
     build: ./service1/

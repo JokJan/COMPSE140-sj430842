@@ -14,13 +14,14 @@ def send_request(url, content, headers):
         r = requests.post(url, json={"text": content}, headers=headers)
         write_log(content)
     except Exception as e:
+        write_log(content)
         write_log("Error: " + str(e))
 
 # Separate function is needed for this to avoid logging an error when service 2 closes
 def exit_program(url, headers):
     try:
-        r = requests.post(url, json={"text": "STOP"}, headers=headers)
         write_log("STOP")
+        r = requests.post(url, json={"text": "STOP"}, headers=headers)
     except Exception as e:
         pass
     finally:
