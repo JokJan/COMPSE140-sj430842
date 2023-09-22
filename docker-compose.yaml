@@ -1,0 +1,16 @@
+services:
+  service1:
+    build: ./service1/
+    ports:
+      - "7839:7839"
+    volumes:
+      - ./logs:/logs
+    environment:
+      - TARGET_PORT=8000
+      - TARGET_HOST=service2
+  service2:
+    build: ./service2/
+    ports:
+     - "8000:8000"
+    volumes:
+      - ./logs:/logs
