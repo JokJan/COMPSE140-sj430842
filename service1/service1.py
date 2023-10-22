@@ -1,32 +1,36 @@
 import requests
 import os
-import sys
 import time
+import pika
 from datetime import datetime
 from pathlib import Path
 
-def write_log(content):
-    with(Path("../logs/service1.log")).open("a") as log_file:
-        log_file.write(content + "\n")
+exchange_name = "devops_exchange"
+
+def send_log(content):
+    channel.basic_publish(exchange=exchange_name, routing_key="log", body=content)
 
 def send_request(url, content, headers):
     try:
-        r = requests.post(url, json={"text": content}, headers=headers)
-        write_log(content)
+        response = requests.post(url, json={"text": content}, headers=headers)
+        time_string = get_time_string()
+        log_string = f"{response.status_code} {time_string}"
+        send_log(log_string)
     except Exception as e:
-        write_log(content)
-        write_log("Error: " + str(e))
+        send_log("Error sending request: " + str(e))
 
-# Separate function is needed for this to avoid logging an error when service 2 closes
-def exit_program(url, headers):
+#TODO: Wait for the topic to be listened to
+def send_message(content):
     try:
-        write_log("STOP")
-        r = requests.post(url, json={"text": "STOP"}, headers=headers)
+        channel.basic_publish(exchange=exchange_name, routing_key="message", body=content)
     except Exception as e:
-        pass
-    finally:
-        sys.exit(0)
+        send_log("Error sending message: " + str(e))
 
+
+def get_time_string():
+    now = datetime.now()
+    time_string = now.strftime("%Y-%m-%dT%H:%M:%S.%fz")
+    return time_string
 
 if __name__ == "__main__":
     headers = {
@@ -46,13 +50,19 @@ if __name__ == "__main__":
     with(p/"service1.log").open('w') as log_file:
         log_file.write("")
 
+    # Create connection to rabbitmq, and the required exchange and topic
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host="rabbitmq"))
+    channel = connection.channel()
+    channel.exchange_declare(exchange=exchange_name, exchange_type="topic")
+
     for i in range(1, 21):
-        now = datetime.now()
-        time_string = now.strftime("%Y-%m-%dT%H:%M:%S.%fz")
-        text = f"{i} {time_string} {target}"
+        time_string = get_time_string()
+        text = f"SND {i} {time_string} {target}"
         
         send_request(url, text, headers)
+        send_message(text)
         time.sleep(2)
 
-    # Send final message and stop
-    exit_program(url, headers)
+    # Send final message and close connection
+    send_log("SND STOP")
+    connection.close()

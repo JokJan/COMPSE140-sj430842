@@ -2,16 +2,37 @@ name: "sj430842"
 services:
   service1:
     build: ./service1/
-    ports:
-      - "7839:7839"
     volumes:
       - ./logs:/logs
     environment:
       - TARGET_PORT=8000
       - TARGET_HOST=service2
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
   service2:
     build: ./service2/
-    ports:
-     - "8000:8000"
     volumes:
       - ./logs:/logs
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+  monitor:
+    build: ./monitor
+    ports:
+      - 8087:8087
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+  rabbitmq:
+    image: rabbitmq:3.12.6-management
+    # TODO: remove before return, and change to non management version (alpine?)
+    ports:
+      - "15672:15672"
+    # A health check is used to see if rabbitmq is ready before starting other containers
+    # In a real world case the interval would be longer, but due to the timing requirements of this task it is set to 5 seconds
+    healthcheck:
+      test: rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms
+      interval: 5s
+      timeout: 5s
+      retries: 10

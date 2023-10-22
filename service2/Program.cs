@@ -10,6 +10,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add the Rabbit service to be run
+builder.Services.AddHostedService<RabbitService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -22,18 +22,16 @@ public class IpController : Controller
         var ipAddr = HttpContext.Connection.RemoteIpAddress;
         var port = HttpContext.Connection.RemotePort;
         var body = receivedText.Text;
-        _logger.LogInformation("Post received");
+        Console.WriteLine("Post received");
 
         // If an ip address has been gotten from the request
         if (ipAddr != null) {
             // Get the path for the log file from configuration (appsettings.json)
             string logPath = @_configuration.GetValue<string>("LogPath") + "/service2.log";
+            // TODO: Change to log topic
             using (StreamWriter writer = System.IO.File.AppendText(logPath))
             {
                 writer.WriteLine(body + " " + ipAddr.ToString() + ":" + port.ToString());
-            }
-            if (receivedText.Text == "STOP") {
-                Environment.Exit(0);
             }
             return receivedText.Text + " " + ipAddr.ToString() + ":" + port.ToString();
         }
