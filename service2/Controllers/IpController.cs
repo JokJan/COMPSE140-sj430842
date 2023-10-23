@@ -1,3 +1,6 @@
+using devops;
+using RabbitMQ.Client;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 
 namespace service2.Controllers;
@@ -5,18 +8,16 @@ namespace service2.Controllers;
 [Route("")]
 public class IpController : Controller
 {
+    private readonly RabbitMQChannel _sendConnection;
 
-    private readonly ILogger<IpController> _logger;
-    private readonly IConfiguration _configuration;
-
-    public IpController(ILogger<IpController> logger, IConfiguration configuration)
-    {
-        _logger = logger;
-        _configuration = configuration;
+    public IpController(RabbitMQChannel sendConnection)
+    {   
+        _sendConnection = sendConnection;
     }
+
     // Receive the body as JSON object, as reading text/plain is apparently difficult in .net
     [HttpPost(Name = "")]
-    public String Post([FromBody]ReceivedText receivedText)
+    public string Post([FromBody]ReceivedText receivedText)
     {
         // Get the IP adress, port and content from the request
         var ipAddr = HttpContext.Connection.RemoteIpAddress;
@@ -26,16 +27,13 @@ public class IpController : Controller
 
         // If an ip address has been gotten from the request
         if (ipAddr != null) {
-            // Get the path for the log file from configuration (appsettings.json)
-            string logPath = @_configuration.GetValue<string>("LogPath") + "/service2.log";
-            // TODO: Change to log topic
-            using (StreamWriter writer = System.IO.File.AppendText(logPath))
-            {
-                writer.WriteLine(body + " " + ipAddr.ToString() + ":" + port.ToString());
-            }
-            return receivedText.Text + " " + ipAddr.ToString() + ":" + port.ToString();
+            string response = body + " " + ipAddr.ToString() + ":" + port.ToString();
+            byte[] encoded_response = Encoding.UTF8.GetBytes(response);
+            _sendConnection.channel.BasicPublish(exchange: _sendConnection.exchangeName, routingKey: "log", basicProperties: null, body: encoded_response);
+            return response;
         }
         else {
+            HttpContext.Response.StatusCode = 500;
             return "No ip adress found";
         }
     }

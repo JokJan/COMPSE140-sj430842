@@ -1,32 +1,56 @@
-using System.Threading;
+using RabbitMQ.Client;
 
-Thread.Sleep(2000);
+namespace devops;
 
-var builder = WebApplication.CreateBuilder(args);
+public class Program {
+    public static readonly string exchangeName = "devops_exchange";
 
-// Add services to the container.
+    public static void Main(string[] args) {
+        Thread.Sleep(2000);
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+        var builder = WebApplication.CreateBuilder(args);
 
-// Add the Rabbit service to be run
-builder.Services.AddHostedService<RabbitService>();
+        // Add services to the container.
 
-var app = builder.Build();
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+        // Start listening for new RabbitMQ messages as a background service
+        builder.Services.AddHostedService<RabbitService>();
+
+        // Create rabbitmq connection to be used to send log messages, following the rabbitmq recommendation to have different channels for sending and receiving messages
+        ConnectionFactory factory = new() { HostName = "rabbitmq" };
+        IConnection connection = factory.CreateConnection();
+        IModel channel = connection.CreateModel();
+        channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Topic);
+
+        RabbitMQChannel sendConnection = new(channel, exchangeName);
+        builder.Services.AddSingleton(sendConnection);
+
+        var app = builder.Build();
+
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.MapControllers();
+
+        app.Run();
+    }
 }
 
-app.MapControllers();
+// Helper class to send the RabbitMq connection to classes that need it, so they don't all have to instantiate it
+public class RabbitMQChannel {
+    public IModel channel;
+    public string exchangeName;
 
-//Create the log file and its path if it doesn't exist, and empty it if it does
-var path = app.Configuration["LogPath"];
-Directory.CreateDirectory(path);
-File.Create(path + "/service2.log").Close();
+    public RabbitMQChannel(IModel channel, string exchangeName) {
+        this.channel = channel;
+        this.exchangeName = exchangeName;
+    }
+}
 
-app.Run();

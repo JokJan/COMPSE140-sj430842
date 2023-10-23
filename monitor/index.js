@@ -27,6 +27,7 @@ connectToRabbitMQ().then(() => {
     }, {noAck: true});
 });
 
+// Respond to requests with a list of logs received
 app.get('*', (req, res) => {
     let response = logs.join('\n');
     res.type('text/plain');

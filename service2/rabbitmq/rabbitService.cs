@@ -1,4 +1,5 @@
 using System.Text;
+using devops;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -7,27 +8,32 @@ public class RabbitService : BackgroundService {
     private ConnectionFactory _factory;
     private IConnection _connection;
     private IModel _channel;
-    private String queueName;
+    private RabbitMQChannel _sendChannel;
+    private string _queueName;
 
-    private readonly String exchangeName = "devops_exchange";
-    private readonly String topicName = "message";
+    private readonly string exchangeName = "devops_exchange";
+    private readonly string listenedTopic = "message";
 
-    public RabbitService(IServiceProvider sp) {
+    public RabbitService(IServiceProvider sp, RabbitMQChannel sendChannel) {
         _sp = sp;
+        // Create the RabbitMQ connection used to listen for messages
         _factory = new ConnectionFactory() { HostName = "rabbitmq" };
         _connection = _factory.CreateConnection();
         _channel = _connection.CreateModel();
         _channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Topic);
-        queueName = _channel.QueueDeclare().QueueName;
+        _queueName = _channel.QueueDeclare().QueueName;
 
         // Bind the created queue to the topic message
-        _channel.QueueBind(queue: queueName, exchange: exchangeName, routingKey: topicName);
+        _channel.QueueBind(queue: _queueName, exchange: exchangeName, routingKey: listenedTopic);
+
+        _sendChannel = sendChannel;
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (stoppingToken.IsCancellationRequested)
         {
+            // Dispose of the connection if we stop listening for new messages
             _channel.Dispose();
             _connection.Dispose();
 
@@ -39,16 +45,16 @@ public class RabbitService : BackgroundService {
         consumer.Received += (model, eventargs) => {
             // Read the incoming message
             byte[] body = eventargs.Body.ToArray();
-            String message = Encoding.UTF8.GetString(body);
+            string message = Encoding.UTF8.GetString(body);
             Console.WriteLine("Received message {0}", message);
 
             // Send the log message
-            String log_message = message + " MSG";
+            string log_message = message + " MSG";
             byte[] log_body = Encoding.UTF8.GetBytes(log_message);
-            _channel.BasicPublish(exchange: exchangeName, routingKey: "log", basicProperties: null, body: log_body);
+            _sendChannel.channel.BasicPublish(exchange: _sendChannel.exchangeName, routingKey: "log", basicProperties: null, body: log_body);
         };
 
-        _channel.BasicConsume(queue: queueName, autoAck: true, consumer: consumer);
+        _channel.BasicConsume(queue: _queueName, autoAck: true, consumer: consumer);
 
         return Task.CompletedTask;
     }

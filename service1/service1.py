@@ -19,7 +19,6 @@ def send_request(url, content, headers):
     except Exception as e:
         send_log("Error sending request: " + str(e))
 
-#TODO: Wait for the topic to be listened to
 def send_message(content):
     try:
         channel.basic_publish(exchange=exchange_name, routing_key="message", body=content)
@@ -44,12 +43,6 @@ if __name__ == "__main__":
     target = target_host + ":" + target_port
     url = "http://" + target + "/"
 
-    # Ensure the logs directory exists, and that the log file is empty
-    p = Path("../logs")
-    p.mkdir(exist_ok=True)
-    with(p/"service1.log").open('w') as log_file:
-        log_file.write("")
-
     # Create connection to rabbitmq, and the required exchange and topic
     connection = pika.BlockingConnection(pika.ConnectionParameters(host="rabbitmq"))
     channel = connection.channel()
@@ -66,3 +59,4 @@ if __name__ == "__main__":
     # Send final message and close connection
     send_log("SND STOP")
     connection.close()
+    # The service stops running here instead of waiting for docker compose down, as there is no sensible way to keep it running, nor is there anything for it to do
