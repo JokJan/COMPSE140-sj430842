@@ -1,3 +1,5 @@
+# No network is defined here because docker automatically does that, so that is redundant work
+# And services are refered to by their names, because refering to them using the IP is asinine
 name: "sj430842"
 services:
   service1:
