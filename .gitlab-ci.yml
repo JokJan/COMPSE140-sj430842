@@ -17,4 +17,4 @@ docker-compose-up:
   stage: deploy 
   environment: production
   script:
-    - docker compose up
+    - docker compose up --detach
