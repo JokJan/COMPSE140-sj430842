@@ -1,0 +1,20 @@
+stages:          
+  - build
+  - test
+  - deploy
+
+docker-compose-build:       
+  stage: build
+  script:
+    - docker compose build
+
+test-job:   
+  stage: test   
+  script:
+    - echo "No tests are yet implemented"
+
+docker-compose-up:      
+  stage: deploy 
+  environment: production
+  script:
+    - docker compose up
