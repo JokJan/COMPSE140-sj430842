@@ -12,6 +12,7 @@ test-job:
   stage: test   
   script:
     - cd tests
+    - npm install
     - npm test
 
 
