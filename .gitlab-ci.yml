@@ -11,7 +11,7 @@ docker-compose-build:
 test-job:   
   stage: test   
   script:
-    - echo "No tests are yet implemented"
+    - npm test
 
 docker-compose-up:      
   stage: deploy 
