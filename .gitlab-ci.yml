@@ -11,7 +11,9 @@ docker-compose-build:
 test-job:   
   stage: test   
   script:
+    - cd tests
     - npm test
+
 
 docker-compose-up:      
   stage: deploy 
