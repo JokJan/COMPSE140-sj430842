@@ -3,6 +3,12 @@ stages:
   - test
   - deploy
 
+# Close the software if it is running from a previous run of the pipeline to allow the new version to be started
+docker-compose-down:
+  stage: build
+  script:
+    docker compose down
+
 docker-compose-build:       
   stage: build
   script:
