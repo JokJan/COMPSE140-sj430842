@@ -5,12 +5,12 @@ describe("Get messages", () => {
     let body;
 
     beforeAll(async () => {
-      response = await fetch("http://localhost:8087");
+      response = await fetch("http://localhost:8083/messages");
       body = await response.text();
     });
 
 
-    test("Monitor returns logs",async () => {
+    test("Response body contains log messages",async () => {
       /* As there may or may not be errors caused by service 2 starting later than service 1,
         check whether the logs contain either a succesfull send, or a failed send*/
         const acceptedSubstrings = ["Error sending request", "SND"];
