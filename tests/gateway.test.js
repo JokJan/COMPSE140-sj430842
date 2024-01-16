@@ -1,10 +1,20 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, beforeAll } from "vitest";
 
 describe("Get messages", () => {
-    test("Can call monitor",async () => {
-        let response = await fetch(
-            "http://localhost:8087",
-        );
-        expect(response.status).toBe(200);
+    let response;
+    let body;
+
+    beforeAll(async () => {
+      response = await fetch("http://localhost:8087");
+      body = await response.text();
+    });
+
+
+    test("Monitor returns logs",async () => {
+      /* As there may or may not be errors caused by service 2 starting later than service 1,
+        check whether the logs contain either a succesfull send, or a failed send*/
+        const acceptedSubstrings = ["Error sending request", "SND"];
+        const correctResponse = acceptedSubstrings.some(substring => body.includes(substring));
+        expect(correctResponse).toBe(true);
     })
 });
