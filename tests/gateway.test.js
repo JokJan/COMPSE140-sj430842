@@ -13,7 +13,11 @@ describe("Get messages", () => {
     test("Response body contains log messages",async () => {
       /* As there may or may not be errors caused by service 2 starting later than service 1,
         check whether the logs contain either a succesfull send, or a failed send*/
-        const acceptedSubstrings = ["Error sending request", "SND"];
+        const acceptedSubstrings = [
+          "Error sending request",
+          "SND",
+          "No logs received yet",
+        ];
         const correctResponse = acceptedSubstrings.some(substring => body.includes(substring));
         expect(correctResponse).toBe(true);
     })

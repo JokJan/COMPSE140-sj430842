@@ -1,0 +1,15 @@
+{
+  "name": "api_gateway",
+  "version": "1.0.0",
+  "description": "An API gateway for the application, that allows interacting with it, while keeping the applications themselves secure in their internal network",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sebastian Jokela",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "type": "module"
+}

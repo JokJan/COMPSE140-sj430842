@@ -29,7 +29,13 @@ connectToRabbitMQ().then(() => {
 
 // Respond to requests with a list of logs received
 app.get('*', (req, res) => {
-    let response = logs.join('\n');
+    let response;
+    if (logs.length === 0) {
+        response = "No logs received yet"
+    }
+    else {
+        response = logs.join("\n");
+    }
     res.type('text/plain');
     res.send(response);
 })
