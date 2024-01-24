@@ -40,3 +40,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  redis:
+    image: redis:7.2.4-alpine
+    # As this isn't dependant on rabbitmq at all, no need to wait for it
