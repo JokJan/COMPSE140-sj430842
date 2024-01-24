@@ -8,4 +8,4 @@ RUN python -m pip install -r requirements.txt
 
 COPY . .
 
-CMD python service1.py
+CMD ["python", "-u", "service1.py"]

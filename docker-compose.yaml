@@ -11,6 +11,9 @@ services:
       monitor: 
         # So that logs are listened to
         condition: service_started
+      api-gateway:
+        # So that the state is set to Redis, and the system is ready to listen for commands
+        condition: service_started
   service2:
     build: ./service2/
     depends_on:

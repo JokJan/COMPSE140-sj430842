@@ -2,8 +2,9 @@ import requests
 import os
 import time
 import pika
+import redis
+from states import States
 from datetime import datetime
-from pathlib import Path
 
 exchange_name = "devops_exchange"
 
@@ -32,6 +33,9 @@ def get_time_string():
     return time_string
 
 if __name__ == "__main__":
+    system_running = True
+    i = 1
+
     headers = {
         'Content-type': 'application/json',
         'Accept': 'application/json, text/plain'
@@ -48,13 +52,28 @@ if __name__ == "__main__":
     channel = connection.channel()
     channel.exchange_declare(exchange=exchange_name, exchange_type="topic")
 
-    for i in range(1, 21):
-        time_string = get_time_string()
-        text = f"SND {i} {time_string} {target}"
-        
-        send_request(url, text, headers)
-        send_message(text)
-        time.sleep(2)
+    # Create connection to Redis for getting state information
+    stateStore = redis.Redis(host="redis", port=6379, decode_responses=True)
+
+    while(system_running):
+        state = stateStore.get("state")
+        if (state == States.Shutdown):
+            system_running = False
+        elif (state == States.Paused):
+            # Wait the normal cycle to see whether the state changes
+            time.sleep(2)
+        else:
+            if (state == States.Initial):
+                # Set the state to Running as the service starts sending messages
+                stateStore.set("state", States.Running)
+            time_string = get_time_string()
+            text = f"SND {i} {time_string} {target}"
+            
+            send_request(url, text, headers)
+            send_message(text)
+
+            i += 1
+            time.sleep(2)
 
     # Send final message and close connection
     send_log("SND STOP")
