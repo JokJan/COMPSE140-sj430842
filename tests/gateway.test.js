@@ -43,3 +43,69 @@ describe("GET state", () => {
     expect(correctResponse).toBe(true);
   })
 });
+
+describe("PUT state", () => {
+  test("No new messages are sent after state is put to paused", async () => {
+    // First check that the put request goes through
+    let requestOptions = {
+      method: "PUT",
+      headers: { "Content-Type": "text/plain" },
+      body: "PAUSED"
+    };
+    let putResponse = await fetch("http://localhost:8083/state", requestOptions);
+    expect(putResponse.status).toBe(200)
+
+    // Get logs 2 seconds apart, and check that they are the same, i.e. that service 1 has not sent any new messages in the time it usually would
+    let r1 = await fetch("http://localhost:8083/messages");
+    let firstBody = await r1.text();
+
+    setTimeout(() => {
+      console.log("Delayed for 2 second.");
+    }, "2000");
+
+    let r2 = await fetch("http://localhost:8083/messages");
+    let secondBody = await r2.text();
+
+    expect(firstBody).toEqual(secondBody);
+  });
+  test("After sending is restarted, new messages are sent", async () => {
+    // First check that the put request goes through
+    let requestOptions = {
+      method: "PUT",
+      headers: { "Content-Type": "text/plain" },
+      body: "PAUSED",
+    };
+    let putResponse = await fetch(
+      "http://localhost:8083/state",
+      requestOptions
+    );
+    expect(putResponse.status).toBe(200);
+
+    // Get logs, restart sending, and 2 seconds later check that the logs are different, i.e. that new messages are sent
+    
+    let r1 = await fetch("http://localhost:8083/messages");
+    let firstBody = await r1.text();
+
+    requestOptions = {
+      method: "PUT",
+      headers: { "Content-Type": "text/plain" },
+      body: "RUNNING",
+    };
+    putResponse = await fetch(
+      "http://localhost:8083/state",
+      requestOptions
+    );
+    expect(putResponse.status).toBe(200);
+
+    setTimeout(() => {
+      console.log("Delayed for 2 second.");
+    }, "2000");
+
+    let r2 = await fetch("http://localhost:8083/messages");
+    let secondBody = await r2.text();
+
+    sameResult = firstBody === secondBody;
+
+    expect(sameResult).toBe(false);
+  })
+})
