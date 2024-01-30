@@ -65,6 +65,8 @@ if __name__ == "__main__":
         else:
             if (state == States.Initial):
                 # Set the state to Running as the service starts sending messages
+                i = 1
+                #TODO: log state change
                 stateStore.set("state", States.Running)
             time_string = get_time_string()
             text = f"SND {i} {time_string} {target}"

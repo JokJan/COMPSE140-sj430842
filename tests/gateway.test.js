@@ -1,4 +1,5 @@
 import { describe, expect, test, beforeAll, beforeEach } from "vitest";
+import {setTimeout} from "timers/promises";
 
 describe("GET messages", () => {
     let response;
@@ -59,9 +60,7 @@ describe("PUT state", () => {
     let r1 = await fetch("http://localhost:8083/messages");
     let firstBody = await r1.text();
 
-    setTimeout(() => {
-      console.log("Delayed for 2 second.");
-    }, "2000");
+    await setTimeout(2000);
 
     let r2 = await fetch("http://localhost:8083/messages");
     let secondBody = await r2.text();
@@ -86,25 +85,19 @@ describe("PUT state", () => {
     let r1 = await fetch("http://localhost:8083/messages");
     let firstBody = await r1.text();
 
-    requestOptions = {
-      method: "PUT",
-      headers: { "Content-Type": "text/plain" },
-      body: "RUNNING",
-    };
+    requestOptions.body = "RUNNING";
     putResponse = await fetch(
       "http://localhost:8083/state",
       requestOptions
     );
     expect(putResponse.status).toBe(200);
 
-    setTimeout(() => {
-      console.log("Delayed for 2 second.");
-    }, "2000");
+    await setTimeout(2000);
 
     let r2 = await fetch("http://localhost:8083/messages");
     let secondBody = await r2.text();
 
-    sameResult = firstBody === secondBody;
+    let sameResult = firstBody === secondBody;
 
     expect(sameResult).toBe(false);
   })

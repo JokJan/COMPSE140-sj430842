@@ -28,7 +28,7 @@ connectToRabbitMQ().then(() => {
 });
 
 // Respond to requests with a list of logs received
-app.get('*', (req, res) => {
+app.get('/', (req, res) => {
     let response;
     if (logs.length === 0) {
         response = "No logs received yet"
@@ -38,8 +38,16 @@ app.get('*', (req, res) => {
     }
     res.type('text/plain');
     res.send(response);
-})
+});
 
-app.listen(port, () => {
+app.post('/shutdown', (req, res) => {
+    console.log("Closing monitor");
+    res.send("Closing monitor");
+    server.closeAllConnections();
+    server.close();
+    process.exit(0);
+});
+
+let server = app.listen(port, () => {
     console.log("Monitor running")
-})
+});
