@@ -100,5 +100,34 @@ describe("PUT state", () => {
     let sameResult = firstBody === secondBody;
 
     expect(sameResult).toBe(false);
-  })
-})
+  });
+});
+
+describe("GET run-log", () => {
+  test("Changes to state are found in the log", async () => {
+    // First wait a few seconds to see if the initial change from init to running happens
+    await setTimeout(4000);
+
+    // Make changes to the state
+    let requestOptions = {
+      method: "PUT",
+      headers: { "Content-Type": "text/plain" },
+      body: "PAUSED",
+    };
+    await fetch("http://localhost:8083/state", requestOptions);
+    requestOptions.body = "RUNNING";
+    await fetch("http://localhost:8083/state", requestOptions);
+    requestOptions.body = "INIT";
+    await fetch("http://localhost:8083/state", requestOptions);
+
+    // Get the state history
+    response = await fetch("http://localhost:8083/run-log");
+    log = await response.text();
+
+    // Assert that all the state transitions that should have been made are found
+    expect(log.includes("INIT->RUNNING"));
+    expect(log.includes("RUNNING->PAUSED"));
+    expect(log.includes("PAUSED->RUNNING"));
+    expect(log.includes("RUNNING->INIT"));
+  });
+});
