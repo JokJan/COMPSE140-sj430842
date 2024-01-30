@@ -121,13 +121,13 @@ describe("GET run-log", () => {
     await fetch("http://localhost:8083/state", requestOptions);
 
     // Get the state history
-    response = await fetch("http://localhost:8083/run-log");
-    log = await response.text();
+    let response = await fetch("http://localhost:8083/run-log");
+    let log = await response.text();
 
     // Assert that all the state transitions that should have been made are found
-    expect(log.includes("INIT->RUNNING"));
-    expect(log.includes("RUNNING->PAUSED"));
-    expect(log.includes("PAUSED->RUNNING"));
-    expect(log.includes("RUNNING->INIT"));
+    expect(log.includes("INIT->RUNNING")).toBe(true);
+    expect(log.includes("RUNNING->PAUSED")).toBe(true);
+    expect(log.includes("PAUSED->RUNNING")).toBe(true);
+    expect(log.includes("RUNNING->INIT")).toBe(true);
   });
 });
