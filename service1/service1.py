@@ -32,6 +32,14 @@ def get_time_string():
     time_string = now.strftime("%Y-%m-%dT%H:%M:%S.%fz")
     return time_string
 
+def change_state(new_state):
+    old_state = stateStore.get("state")
+    stateStore.set("state", new_state)
+    time_string = get_time_string()
+    log_string = f"{time_string}: {old_state}->{new_state}"
+    stateStore.rpush("state-log", log_string)
+
+
 if __name__ == "__main__":
     system_running = True
     i = 1
@@ -66,8 +74,7 @@ if __name__ == "__main__":
             if (state == States.Initial):
                 # Set the state to Running as the service starts sending messages
                 i = 1
-                #TODO: log state change
-                stateStore.set("state", States.Running)
+                change_state(States.Running.value)
             time_string = get_time_string()
             text = f"SND {i} {time_string} {target}"
             
@@ -80,4 +87,3 @@ if __name__ == "__main__":
     # Send final message and close connection
     send_log("SND STOP")
     connection.close()
-    # The service stops running here instead of waiting for docker compose down, as there is no sensible way to keep it running, nor is there anything for it to do

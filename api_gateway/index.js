@@ -20,12 +20,14 @@ const client = createClient({
 client.on("error", (err) => console.log("Redis Client Error", err));
 await client.connect();
 
-await client.set("state", states.Initial);
+await changeState(states.Initial);
 
 
 const app = express();
 // Enable reading plain text requests
 app.use(express.text());
+
+// Define helper functions for code in the controllers
 
 async function closeSystem(req, res) {
   // Send requests to service 2 and monitor to shutdown. Service 1 will read it from Redis, so it doesn't need a message
@@ -48,6 +50,16 @@ async function closeSystem(req, res) {
   process.exit(0);
 }
 
+async function changeState(newState) {
+  let oldState = await client.get("state");
+  await client.set("state", newState);
+  let currentTime = new Date().toISOString();
+  let logString = `${currentTime}: ${oldState}->${newState}`;
+  await client.rPush("state-log", logString);
+}
+
+// Define controllers
+
 app.get("/messages", async (req, res) => {
     let monitorResponse = await fetch(monitorURL);
     let messages = await monitorResponse.text();
@@ -66,7 +78,7 @@ app.put("/state", async(req, res) => {
 
   // If the state given is valid
   if (Object.values(states).includes(newState)) {
-    await client.set("state", newState);
+    await changeState(newState);
 
     res.type("text/plain")
 
@@ -83,6 +95,14 @@ app.put("/state", async(req, res) => {
   }
 });
 
+app.get("/run-log", async(req, res) => {
+  let stateLog = await client.lRange("state-log", 0, -1);
+  let stateText = stateLog.join("\r\n");
+  res.send(stateText);
+});
+
 let server = app.listen(port, () => {
   console.log("API gateway running");
 });
+
+
